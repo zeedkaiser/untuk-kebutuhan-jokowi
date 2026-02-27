@@ -212,7 +212,7 @@ function htmlPage(title, message, type) {
 // START 
 // =============================================
 function startOAuthServer() {
-  const port = process.env.PORT || 3000;
+  const port = process.env.PORT;
   app.listen(port, "0.0.0.0", () => {
     console.log(`[OAUTH] Server running on port ${port}`);
     console.log(`[OAUTH] Redirect URI: ${process.env.OAUTH2_REDIRECT_URI}`);
