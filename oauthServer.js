@@ -213,11 +213,10 @@ function htmlPage(title, message, type) {
 // =============================================
 function startOAuthServer() {
   const port = process.env.PORT || 3000;
-  app.listen(port, () => {
-    console.log(`[OAUTH] ✅ OAuth2 server running di http://localhost:${port}`);
-    console.log(`[OAUTH] 🔗 Redirect URI: ${process.env.OAUTH2_REDIRECT_URI}`);
+  app.listen(port, "0.0.0.0", () => {
+    console.log(`[OAUTH] Server running on port ${port}`);
+    console.log(`[OAUTH] Redirect URI: ${process.env.OAUTH2_REDIRECT_URI}`);
   });
 }
-
 module.exports = { startOAuthServer, generateOAuthUrl };
 startOAuthServer();
