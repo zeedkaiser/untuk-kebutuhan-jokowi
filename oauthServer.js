@@ -220,3 +220,4 @@ function startOAuthServer() {
 }
 
 module.exports = { startOAuthServer, generateOAuthUrl };
+startOAuthServer();
