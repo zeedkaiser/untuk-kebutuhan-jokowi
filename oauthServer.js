@@ -122,6 +122,57 @@ app.get("/verify", async (req, res) => {
 });
 
 // =============================================
+// DASHBOARD LOGIN
+// =============================================
+
+app.get("/login", (req, res) => {
+  const params = new URLSearchParams({
+    client_id: process.env.CLIENT_ID,
+    redirect_uri: process.env.DASHBOARD_REDIRECT_URI,
+    response_type: "code",
+    scope: "identify",
+  });
+
+  res.redirect(`https://discord.com/oauth2/authorize?${params}`);
+});
+
+app.get("/dashboard/callback", async (req, res) => {
+  const { code } = req.query;
+  if (!code) return res.send("No code.");
+
+  try {
+    const tokenRes = await axios.post(
+      `${DISCORD_API}/oauth2/token`,
+      new URLSearchParams({
+        client_id: process.env.CLIENT_ID,
+        client_secret: process.env.CLIENT_SECRET,
+        grant_type: "authorization_code",
+        code,
+        redirect_uri: process.env.DASHBOARD_REDIRECT_URI,
+      }),
+      { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+    );
+
+    const access_token = tokenRes.data.access_token;
+
+    const userRes = await axios.get(`${DISCORD_API}/users/@me`, {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
+
+    const user = userRes.data;
+
+    res.send(`
+      <h1>Dashboard</h1>
+      <p>Login as: ${user.username}</p>
+    `);
+  } catch (err) {
+    console.error("Dashboard login error:", err.response?.data || err.message);
+    res.send("Login failed.");
+  }
+});
+
+
+// =============================================
 // HEALTH CHECK
 // =============================================
 app.get("/health", (req, res) => res.json({ status: "ok" }));
