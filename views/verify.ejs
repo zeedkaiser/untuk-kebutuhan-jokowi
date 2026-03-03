@@ -1,0 +1,87 @@
+function premiumVerifyPage(username) {
+  return `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="UTF-8">
+    <title>ProjectZeed Verify</title>
+    <style>
+      body {
+        margin:0;
+        height:100vh;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        background: url("/images/cyberpunk.jpg") center/cover no-repeat;
+        font-family: Poppins, sans-serif;
+      }
+
+      .card {
+        background: rgba(15,20,50,0.85);
+        padding:40px;
+        border-radius:20px;
+        text-align:center;
+        color:white;
+        backdrop-filter: blur(8px);
+        box-shadow:0 0 50px rgba(120,120,255,0.4);
+      }
+
+      .bar {
+        width:0%;
+        height:8px;
+        background:linear-gradient(90deg,#6ea8ff,#b26eff);
+        margin-top:20px;
+        border-radius:5px;
+        transition: width 0.4s ease;
+      }
+
+      .container {
+        background:#111;
+        border-radius:5px;
+        overflow:hidden;
+        margin-top:20px;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="card">
+      <h2> Verification Complete</h2>
+      <p>Welcome, <strong>${username}</strong></p>
+
+      <div class="container">
+        <div class="bar" id="bar"></div>
+      </div>
+
+      <p id="status">Initializing Hacking System By Zeed....</p>
+    </div>
+
+    <script>
+      let p = 0;
+      const bar = document.getElementById("bar");
+      const status = document.getElementById("status");
+
+      const messages = [
+        "Decrypting gateway...",
+        "Syncing identity...",
+        "Encrypting backup token...",
+        "System integrity: 100%",
+        "Verification Success"
+      ];
+
+      let i = 0;
+
+      const interval = setInterval(() => {
+        p += 25;
+        bar.style.width = p + "%";
+        status.innerText = messages[i];
+        i++;
+
+        if (p >= 100) clearInterval(interval);
+      }, 700);
+    </script>
+
+  </body>
+  </html>
+  `;
+}

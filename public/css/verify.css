@@ -1,0 +1,42 @@
+body {
+  margin:0;
+  height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: url("/images/cyberpunk.jpg") center/cover no-repeat;
+  font-family: Poppins, sans-serif;
+}
+
+.overlay {
+  position:absolute;
+  inset:0;
+  background:rgba(10,10,30,0.7);
+  backdrop-filter: blur(5px);
+}
+
+.card {
+  position:relative;
+  z-index:2;
+  background: rgba(15,20,50,0.85);
+  padding:40px;
+  border-radius:20px;
+  text-align:center;
+  color:white;
+  backdrop-filter: blur(8px);
+  box-shadow:0 0 50px rgba(120,120,255,0.4);
+}
+
+.container {
+  background:#111;
+  border-radius:5px;
+  overflow:hidden;
+  margin-top:20px;
+}
+
+.bar {
+  width:0%;
+  height:8px;
+  background:linear-gradient(90deg,#6ea8ff,#b26eff);
+  transition: width 0.4s ease;
+}
