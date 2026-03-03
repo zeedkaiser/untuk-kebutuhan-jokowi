@@ -190,14 +190,10 @@ app.post("/dashboard/restore/:guildId", requireAuth, async (req, res) => {
     const { restoreToGuild } = require("./restoreEngine");
     await restoreToGuild(guildId);
 
-    res.send(`
-      <h2>Restore dijalankan untuk ${guildId}</h2>
-      <a href="/dashboard">Kembali</a>
-    `);
-
+    return res.json({ success: true });
   } catch (err) {
-    console.error("Restore error:", err.message);
-    res.send("Restore gagal.");
+    console.error(err);
+    return res.json({ success: false });
   }
 });
 

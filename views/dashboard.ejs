@@ -7,24 +7,38 @@
 <body>
 
 <div class="sidebar">
-  <h2>⚡ ProjectZeed</h2>
+  <h2> ProjectZeed</h2>
   <a href="/dashboard">Dashboard</a>
+  <a href="#">Restore</a>
+  <a href="#">Analytics</a>
+  <a href="#">Settings</a>
   <a href="/logout">Logout</a>
 </div>
 
 <div class="main">
+
   <h1>Welcome, <%= user.username %></h1>
 
-  <div class="server-grid">
+  <div class="stats">
+    <div class="stat-card">
+      <h3>Total Servers</h3>
+      <p><%= guilds.length %></p>
+    </div>
+
+    <div class="stat-card">
+      <h3>Total Verified</h3>
+      <p><%= totalVerified %></p>
+    </div>
+  </div>
+
+  <div class="guild-grid">
     <% guilds.forEach(guild => { %>
-      <div class="server-card">
+      <div class="guild-card">
         <h3><%= guild.name %></h3>
         <p>ID: <%= guild.id %></p>
-
         <form method="POST" action="/dashboard/restore/<%= guild.id %>">
-          <button class="restore-btn">Restore Members</button>
+          <button>⚡ Restore Members</button>
         </form>
-
       </div>
     <% }) %>
   </div>
