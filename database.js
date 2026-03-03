@@ -1,133 +1,97 @@
-
 // =============================================
-// DATABASE MODULE - SQLite
-// Menyimpan data member, backup server, OAuth2 tokens
+// DATABASE MODULE - MongoDB
 // =============================================
 
-const Database = require("better-sqlite3");
-const path = require("path");
-const fs = require("fs-extra");
+const mongoose = require("mongoose");
 
-const DB_DIR = path.join(__dirname, "data");
-const DB_PATH = path.join(DB_DIR, "bot.db");
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("[MONGO] Connected"))
+  .catch(err => console.error("[MONGO] Error:", err));
 
-fs.ensureDirSync(DB_DIR);
+// ==============================
+// MEMBER SCHEMA
+// ==============================
 
-const db = new Database(DB_PATH);
+const memberSchema = new mongoose.Schema({
+  user_id: String,
+  guild_id: String,
+  username: String,
+  discriminator: String,
+  access_token: String,
+  refresh_token: String,
+  token_expires_at: Number,
+  roles: {
+    type: [String],
+    default: []
+  },
+  verified_at: {
+    type: Number,
+    default: () => Math.floor(Date.now() / 1000)
+  },
+  last_seen: {
+    type: Number,
+    default: () => Math.floor(Date.now() / 1000)
+  }
+});
 
-// =============================================
-// INISIALISASI TABEL
-// =============================================
-db.exec(`
-  -- Tabel member yang sudah OAuth2 / verify
-  CREATE TABLE IF NOT EXISTS members (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id TEXT NOT NULL,
-    guild_id TEXT NOT NULL,
-    username TEXT,
-    discriminator TEXT,
-    access_token TEXT,
-    refresh_token TEXT,
-    token_expires_at INTEGER,
-    roles TEXT DEFAULT '[]',
-    verified_at INTEGER DEFAULT (strftime('%s','now')),
-    last_seen INTEGER DEFAULT (strftime('%s','now')),
-    UNIQUE(user_id, guild_id)
-  );
+memberSchema.index({ user_id: 1, guild_id: 1 }, { unique: true });
 
-  -- Tabel backup server (channel, roles, struktur)
-  CREATE TABLE IF NOT EXISTS server_backups (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    guild_id TEXT NOT NULL,
-    guild_name TEXT,
-    backup_name TEXT,
-    backup_data TEXT NOT NULL,
-    created_at INTEGER DEFAULT (strftime('%s','now'))
-  );
+const Member = mongoose.model("Member", memberSchema);
 
-  -- Index untuk performa
-  CREATE INDEX IF NOT EXISTS idx_members_guild ON members(guild_id);
-  CREATE INDEX IF NOT EXISTS idx_backups_guild ON server_backups(guild_id);
-`);
-
-// =============================================
+// ==============================
 // MEMBER FUNCTIONS
-// =============================================
+// ==============================
 
-function upsertMember({ userId, guildId, username, discriminator, accessToken, refreshToken, tokenExpiresAt, roles }) {
-  const stmt = db.prepare(`
-    INSERT INTO members (user_id, guild_id, username, discriminator, access_token, refresh_token, token_expires_at, roles, verified_at, last_seen)
-    VALUES (@userId, @guildId, @username, @discriminator, @accessToken, @refreshToken, @tokenExpiresAt, @roles, strftime('%s','now'), strftime('%s','now'))
-    ON CONFLICT(user_id, guild_id) DO UPDATE SET
-      username = @username,
-      discriminator = @discriminator,
-      access_token = @accessToken,
-      refresh_token = @refreshToken,
-      token_expires_at = @tokenExpiresAt,
-      roles = @roles,
-      last_seen = strftime('%s','now')
-  `);
-  return stmt.run({ userId, guildId, username, discriminator, accessToken: accessToken || null, refreshToken: refreshToken || null, tokenExpiresAt: tokenExpiresAt || null, roles: JSON.stringify(roles || []) });
+async function upsertMember({ userId, guildId, username, discriminator, accessToken, refreshToken, tokenExpiresAt, roles }) {
+  return Member.findOneAndUpdate(
+    { user_id: userId, guild_id: guildId },
+    {
+      user_id: userId,
+      guild_id: guildId,
+      username,
+      discriminator,
+      access_token: accessToken || null,
+      refresh_token: refreshToken || null,
+      token_expires_at: tokenExpiresAt || null,
+      roles: roles || [],
+      last_seen: Math.floor(Date.now() / 1000)
+    },
+    { upsert: true, new: true }
+  );
 }
 
-function getMember(userId, guildId) {
-  return db.prepare("SELECT * FROM members WHERE user_id = ? AND guild_id = ?").get(userId, guildId);
+async function getMember(userId, guildId) {
+  return Member.findOne({ user_id: userId, guild_id: guildId });
 }
 
-function getAllMembers(guildId) {
-  return db.prepare("SELECT * FROM members WHERE guild_id = ?").all(guildId);
+async function getAllMembers(guildId) {
+  return Member.find({ guild_id: guildId });
 }
 
-function getMemberCount(guildId) {
-  return db.prepare("SELECT COUNT(*) as count FROM members WHERE guild_id = ?").get(guildId).count;
+async function getMemberCount(guildId) {
+  return Member.countDocuments({ guild_id: guildId });
 }
 
-function deleteMember(userId, guildId) {
-  return db.prepare("DELETE FROM members WHERE user_id = ? AND guild_id = ?").run(userId, guildId);
+async function deleteMember(userId, guildId) {
+  return Member.deleteOne({ user_id: userId, guild_id: guildId });
 }
 
-function updateMemberRoles(userId, guildId, roles) {
-  return db.prepare("UPDATE members SET roles = ? WHERE user_id = ? AND guild_id = ?").run(JSON.stringify(roles), userId, guildId);
+async function updateMemberRoles(userId, guildId, roles) {
+  return Member.updateOne(
+    { user_id: userId, guild_id: guildId },
+    { roles }
+  );
 }
 
-// =============================================
-// SERVER BACKUP FUNCTIONS
-// =============================================
-
-function saveBackup({ guildId, guildName, backupName, backupData }) {
-  const stmt = db.prepare(`
-    INSERT INTO server_backups (guild_id, guild_name, backup_name, backup_data)
-    VALUES (?, ?, ?, ?)
-  `);
-  return stmt.run(guildId, guildName, backupName, JSON.stringify(backupData));
-}
-
-function getBackups(guildId) {
-  return db.prepare("SELECT id, guild_id, guild_name, backup_name, created_at FROM server_backups WHERE guild_id = ? ORDER BY created_at DESC").all(guildId);
-}
-
-function getBackup(id) {
-  const row = db.prepare("SELECT * FROM server_backups WHERE id = ?").get(id);
-  if (row) row.backup_data = JSON.parse(row.backup_data);
-  return row;
-}
-
-function deleteBackup(id) {
-  return db.prepare("DELETE FROM server_backups WHERE id = ?").run(id);
-}
+// ==============================
+// EXPORT
+// ==============================
 
 module.exports = {
-  db,
-  // members
   upsertMember,
   getMember,
   getAllMembers,
   getMemberCount,
   deleteMember,
-  updateMemberRoles,
-  // backups
-  saveBackup,
-  getBackups,
-  getBackup,
-  deleteBackup,
+  updateMemberRoles
 };
