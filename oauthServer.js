@@ -14,6 +14,7 @@ app.set("views", __dirname + "/views");
 app.use(express.static(__dirname + "/public"));
 
 app.use(express.json());
+app.set("trust proxy", 1); // 🔥 WAJIB sebelum session
 
 app.use(
   session({
@@ -89,6 +90,12 @@ app.get("/verify", async (req, res) => {
 // LOGIN ROUTE (WAJIB ADA)
 // ==================================================
 app.get("/login", (req, res) => {
+
+  // 🔥 Kalau sudah login, jangan redirect ke Discord lagi
+  if (req.session.user) {
+    return res.redirect("/dashboard");
+  }
+
   const params = new URLSearchParams({
     client_id: process.env.CLIENT_ID,
     redirect_uri: process.env.DASHBOARD_REDIRECT_URI,
