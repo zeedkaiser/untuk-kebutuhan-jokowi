@@ -78,7 +78,7 @@ app.get("/verify", async (req, res) => {
     console.log(`[OAUTH] 🔍 Menyimpan member - ID: ${user.id}, Username: ${user.username}, Guild: ${guildId}`);
 
    
-    const result = upsertMember({
+    const result = await upsertMember({
       userId: user.id,
       guildId,
       username: user.username,
