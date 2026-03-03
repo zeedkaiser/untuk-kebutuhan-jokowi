@@ -231,7 +231,29 @@ app.get("/health", (req, res) => {
 
 
 
+// DEBUG MEMBERS
+app.get("/debug/members", async (req, res) => {
+  const { guild_id } = req.query;
+  const { getAllMembers } = require("./database");
 
+  if (!guild_id) {
+    return res.json({ error: "guild_id required" });
+  }
+
+  try {
+    const members = await getAllMembers(guild_id);
+
+    return res.json({
+      guildId: guild_id,
+      totalMembers: members.length,
+      members: members
+    });
+
+  } catch (err) {
+    console.error(err);
+    return res.json({ error: "failed to fetch members" });
+  }
+});
 
 // ==================================================
 // START SERVER
