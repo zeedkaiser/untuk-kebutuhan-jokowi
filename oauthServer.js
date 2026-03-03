@@ -139,17 +139,6 @@ app.get("/verify", async (req, res) => {
 // DASHBOARD LOGIN
 // =============================================
 
-app.get("/login", (req, res) => {
-  const params = new URLSearchParams({
-    client_id: process.env.CLIENT_ID,
-    redirect_uri: process.env.DASHBOARD_REDIRECT_URI,
-    response_type: "code",
-    scope: "identify",
-  });
-
-  res.redirect(`https://discord.com/oauth2/authorize?${params}`);
-});
-
 app.get("/dashboard/callback", async (req, res) => {
   const { code } = req.query;
   if (!code) return res.send("No code.");
@@ -169,16 +158,39 @@ app.get("/dashboard/callback", async (req, res) => {
 
     const access_token = tokenRes.data.access_token;
 
+    // Ambil user
     const userRes = await axios.get(`${DISCORD_API}/users/@me`, {
       headers: { Authorization: `Bearer ${access_token}` },
     });
 
     const user = userRes.data;
 
-    res.send(`
-      <h1>Dashboard</h1>
-      <p>Login as: ${user.username}</p>
-    `);
+    // 🔥 Ambil guild list
+    const guildRes = await axios.get(`${DISCORD_API}/users/@me/guilds`, {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
+
+    const guilds = guildRes.data;
+
+    // Filter admin (permission ADMINISTRATOR = 0x8)
+    const adminGuilds = guilds.filter(g => {
+      try {
+        return (BigInt(g.permissions) & BigInt(0x8)) === BigInt(0x8);
+      } catch {
+        return false;
+      }
+    });
+
+    // Simpan session
+    req.session.user = {
+      id: user.id,
+      username: user.username,
+    };
+
+    req.session.guilds = adminGuilds;
+
+    return res.redirect("/dashboard");
+
   } catch (err) {
     console.error("Dashboard login error:", err.response?.data || err.message);
     res.send("Login failed.");
@@ -273,6 +285,34 @@ function htmlPage(title, message, type) {
 </body>
 </html>`;
 }
+
+
+function requireAuth(req, res, next) {
+  if (!req.session.user) {
+    return res.redirect("/login");
+  }
+  next();
+}
+
+app.get("/dashboard", requireAuth, (req, res) => {
+  const guildList = (req.session.guilds || [])
+    .map(g => `<li>${g.name} (${g.id})</li>`)
+    .join("");
+
+  res.send(`
+    <h1>Dashboard</h1>
+    <p>Login as: ${req.session.user.username}</p>
+    <h3>Your Admin Servers:</h3>
+    <ul>${guildList}</ul>
+    <a href="/logout">Logout</a>
+  `);
+});
+
+app.get("/logout", (req, res) => {
+  req.session.destroy(() => {
+    res.redirect("/login");
+  });
+});
 
 // =============================================
 // START 
