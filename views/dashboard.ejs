@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ProjectZeed Dashboard</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="sidebar">
+  <h2>⚡ ProjectZeed</h2>
+  <a href="/dashboard">Dashboard</a>
+  <a href="/logout">Logout</a>
+</div>
+
+<div class="main">
+  <h1>Welcome, <%= user.username %></h1>
+
+  <div class="server-grid">
+    <% guilds.forEach(guild => { %>
+      <div class="server-card">
+        <h3><%= guild.name %></h3>
+        <p>ID: <%= guild.id %></p>
+
+        <form method="POST" action="/dashboard/restore/<%= guild.id %>">
+          <button class="restore-btn">Restore Members</button>
+        </form>
+
+      </div>
+    <% }) %>
+  </div>
+
+</div>
+
+</body>
+</html>
