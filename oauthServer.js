@@ -127,15 +127,16 @@ app.get("/verify", async (req, res) => {
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 
 
-app.get("/debug/members", (req, res) => {
+app.get("/debug/members", async (req, res) => {
   const { getAllMembers } = require("./database");
   const guildId = req.query.guild_id;
-  
+
   if (!guildId) {
     return res.json({ error: "guild_id parameter required" });
   }
 
-  const members = getAllMembers(guildId);
+  const members = await getAllMembers(guildId);
+
   res.json({
     guildId,
     totalMembers: members.length,
