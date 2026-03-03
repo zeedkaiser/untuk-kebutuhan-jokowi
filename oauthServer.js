@@ -172,10 +172,20 @@ function requireAuth(req, res, next) {
 // ==================================================
 // DASHBOARD VIEW (EJS)
 // ==================================================
-app.get("/dashboard", requireAuth, (req, res) => {
+app.get("/dashboard", requireAuth, async (req, res) => {
+  const { getAllMembers } = require("./database");
+
+  let totalVerified = 0;
+
+  for (const guild of (req.session.guilds || [])) {
+    const members = await getAllMembers(guild.id);
+    totalVerified += members.length;
+  }
+
   res.render("dashboard", {
     user: req.session.user,
     guilds: req.session.guilds || [],
+    totalVerified
   });
 });
 
