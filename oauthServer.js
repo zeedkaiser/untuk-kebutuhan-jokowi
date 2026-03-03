@@ -2,7 +2,7 @@ const express = require("express");
 const axios = require("axios");
 const session = require("express-session");
 const { upsertMember } = require("./database");
-const MongoStore = require("connect-mongo");
+const MongoStore = require("connect-mongo").default;
 
 
 const app = express();
