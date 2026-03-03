@@ -10,6 +10,20 @@ const path = require("path");
 const { upsertMember } = require("./database");
 
 const app = express();
+const session = require("express-session");
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: true,
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24,
+    },
+  })
+);
 app.use(express.json());
 
 const DISCORD_API = "https://discord.com/api/v10";
