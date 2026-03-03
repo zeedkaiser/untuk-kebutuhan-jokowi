@@ -2,6 +2,8 @@ const express = require("express");
 const axios = require("axios");
 const session = require("express-session");
 const { upsertMember } = require("./database");
+const MongoStore = require("connect-mongo");
+
 
 const app = express();
 app.set("trust proxy", 1); // WAJIB untuk Railway
@@ -21,6 +23,9 @@ app.use(
     secret: process.env.SESSION_SECRET || "zeed_secret",
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI,
+    }),
     cookie: {
       secure: true,
       httpOnly: true,
