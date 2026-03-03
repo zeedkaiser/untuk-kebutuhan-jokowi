@@ -224,3 +224,16 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`OAuth Server running on port ${PORT}`);
 });
+
+app.get("/dashboard/guild/:guildId/members", requireAuth, async (req, res) => {
+  const { guildId } = req.params;
+  const { getAllMembers } = require("./database");
+
+  const members = await getAllMembers(guildId);
+
+  res.render("members", {
+    user: req.session.user,
+    guildId,
+    members
+  });
+});

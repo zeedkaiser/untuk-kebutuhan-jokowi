@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Members - ProjectZeed</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="sidebar">
+  <h2>⚡ ProjectZeed</h2>
+  <a href="/dashboard">Dashboard</a>
+  <a href="/logout">Logout</a>
+</div>
+
+<div class="main">
+
+  <h1>Members - <span class="gradient-text"><%= guildId %></span></h1>
+
+  <div class="stats">
+    <div class="stat-card">
+      <h3>Total Verified</h3>
+      <p><%= members.length %></p>
+    </div>
+  </div>
+
+  <input 
+    type="text" 
+    id="searchInput" 
+    placeholder="Search member..." 
+    class="search-input"
+    onkeyup="filterMembers()"
+  >
+
+  <div class="guild-grid" id="memberGrid">
+    <% members.forEach(member => { %>
+      <div class="guild-card member-card">
+
+        <h3><%= member.username %></h3>
+        <p>ID: <%= member.user_id %></p>
+
+        <% 
+          const now = Math.floor(Date.now() / 1000);
+          const isExpired = member.token_expires_at && member.token_expires_at < now;
+        %>
+
+        <% if (member.access_token) { %>
+          <% if (isExpired) { %>
+            <span class="badge expired">Expired</span>
+          <% } else { %>
+            <span class="badge active">Active</span>
+          <% } %>
+        <% } else { %>
+          <span class="badge basic">Basic</span>
+        <% } %>
+
+      </div>
+    <% }) %>
+  </div>
+
+</div>
+
+<script>
+function filterMembers() {
+  const input = document.getElementById("searchInput").value.toLowerCase();
+  const cards = document.querySelectorAll(".member-card");
+
+  cards.forEach(card => {
+    const username = card.querySelector("h3").innerText.toLowerCase();
+    if (username.includes(input)) {
+      card.style.display = "block";
+    } else {
+      card.style.display = "none";
+    }
+  });
+}
+</script>
+
+</body>
+</html>
