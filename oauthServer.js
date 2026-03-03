@@ -74,10 +74,7 @@ app.get("/verify", async (req, res) => {
       roles: [],
     });
 
-    return res.send(`
-      <h2>Verify Success</h2>
-      <p>${user.username} berhasil diverifikasi.</p>
-    `);
+    return res.send(premiumVerifyPage(user.username));
 
   } catch (err) {
     console.error("Verify error:", err.response?.data || err.message);
@@ -224,6 +221,95 @@ app.get("/logout", (req, res) => {
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
+
+function premiumVerifyPage(username) {
+  return `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="UTF-8">
+    <title>ProjectZeed Verify</title>
+    <style>
+      body {
+        margin:0;
+        height:100vh;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        background: url("https://image-1.uhdpaper.com/wallpaper/cyberpunk-edgerunners-lucy-and-david-in-moon-4k-wallpaper-uhdpaper.com-628@1@i.jpg") center/cover no-repeat;
+        font-family: Poppins, sans-serif;
+      }
+
+      .card {
+        background: rgba(15,20,50,0.85);
+        padding:40px;
+        border-radius:20px;
+        text-align:center;
+        color:white;
+        backdrop-filter: blur(8px);
+        box-shadow:0 0 50px rgba(120,120,255,0.4);
+      }
+
+      .bar {
+        width:0%;
+        height:8px;
+        background:linear-gradient(90deg,#6ea8ff,#b26eff);
+        margin-top:20px;
+        border-radius:5px;
+        transition: width 0.4s ease;
+      }
+
+      .container {
+        background:#111;
+        border-radius:5px;
+        overflow:hidden;
+        margin-top:20px;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="card">
+      <h2>⚡ Verification Complete</h2>
+      <p>Welcome, <strong>${username}</strong></p>
+
+      <div class="container">
+        <div class="bar" id="bar"></div>
+      </div>
+
+      <p id="status">Initializing secure handshake...</p>
+    </div>
+
+    <script>
+      let p = 0;
+      const bar = document.getElementById("bar");
+      const status = document.getElementById("status");
+
+      const messages = [
+        "Decrypting gateway...",
+        "Syncing identity...",
+        "Encrypting backup token...",
+        "System integrity: 100%",
+        "Verification Success"
+      ];
+
+      let i = 0;
+
+      const interval = setInterval(() => {
+        p += 25;
+        bar.style.width = p + "%";
+        status.innerText = messages[i];
+        i++;
+
+        if (p >= 100) clearInterval(interval);
+      }, 700);
+    </script>
+
+  </body>
+  </html>
+  `;
+}
+
 
 
 // ==================================================
