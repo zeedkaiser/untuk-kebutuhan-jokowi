@@ -187,27 +187,6 @@ app.get("/verify", async (req, res) => {
 
 });
 
-    console.log("[VERIFY] USER SAVED TO DATABASE");
-
-    // =============================
-    // SUCCESS PAGE
-    // =============================
-    return res.render("verify", {
-      username: user.username
-    });
-
-  } catch (err) {
-
-    console.error(
-      "[VERIFY ERROR]",
-      err.response?.data || err.message
-    );
-
-    return res.send("Verify gagal.");
-  }
-
-});
-
 
 // ==================================================
 // LOGIN ROUTE (WAJIB ADA)
