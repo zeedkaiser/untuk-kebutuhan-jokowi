@@ -89,22 +89,50 @@ app.get("/verify", async (req, res) => {
     console.log("[VERIFY] USER:", user.id, user.username);
 
     // =============================
-    // STEP 3 - JOIN USER TO GUILD
+    // STEP 3 - CHECK MEMBER FIRST
     // =============================
-    await axios.put(
-      `${DISCORD_API}/guilds/${guildId}/members/${user.id}`,
-      {
-        access_token: access_token
-      },
-      {
-        headers: {
-          Authorization: `Bot ${process.env.BOT_TOKEN}`,
-          "Content-Type": "application/json"
-        }
-      }
-    );
+    let memberExists = true;
 
-    console.log("[VERIFY] USER JOINED GUILD");
+    try {
+
+      await axios.get(
+        `${DISCORD_API}/guilds/${guildId}/members/${user.id}`,
+        {
+          headers: {
+            Authorization: `Bot ${process.env.BOT_TOKEN}`
+          }
+        }
+      );
+
+      console.log("[VERIFY] USER ALREADY IN GUILD");
+
+    } catch {
+
+      memberExists = false;
+
+    }
+
+    // =============================
+    // STEP 3B - JOIN USER IF NOT EXISTS
+    // =============================
+    if (!memberExists) {
+
+      await axios.put(
+        `${DISCORD_API}/guilds/${guildId}/members/${user.id}`,
+        {
+          access_token: access_token
+        },
+        {
+          headers: {
+            Authorization: `Bot ${process.env.BOT_TOKEN}`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      console.log("[VERIFY] USER JOINED GUILD");
+
+    }
 
     // =============================
     // STEP 4 - GET MEMBER DATA
@@ -137,6 +165,27 @@ app.get("/verify", async (req, res) => {
       tokenExpiresAt,
       roles
     });
+
+    console.log("[VERIFY] USER SAVED TO DATABASE");
+
+    // =============================
+    // SUCCESS PAGE
+    // =============================
+    return res.render("verify", {
+      username: user.username
+    });
+
+  } catch (err) {
+
+    console.error(
+      "[VERIFY ERROR]",
+      err.response?.data || err.message
+    );
+
+    return res.send("Verify gagal.");
+  }
+
+});
 
     console.log("[VERIFY] USER SAVED TO DATABASE");
 
