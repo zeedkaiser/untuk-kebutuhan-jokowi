@@ -78,7 +78,15 @@ app.get("/verify", async (req, res) => {
       tokenExpiresAt,
       roles: [],
     });
-
+    try {
+    await axios.post(process.env.BOT_VERIFY_ENDPOINT, {
+    guildId: guildId,
+    userId: user.id
+    });
+    console.log("Bot verify request sent");
+    } catch (err) {
+    console.error("Bot verify failed:", err.message);
+    }
     return res.render("verify", {
     username: user.username
     });
