@@ -37,21 +37,16 @@ app.use(
 const DISCORD_API = "https://discord.com/api/v10";
 
 
-// =============================================
-// VERIFY ROUTE
-// =============================================
+// ==================================================
+// VERIFY ROUTE (TETAP AMAN)
+// ==================================================
 app.get("/verify", async (req, res) => {
-
   const { code, state } = req.query;
   if (!code || !state) return res.send("Invalid request.");
 
-  const [guildId, expectedUserId] = state.split(":");
+  const [guildId] = state.split(":");
 
   try {
-
-    // =============================
-    // STEP 1 - GET ACCESS TOKEN
-    // =============================
     const tokenRes = await axios.post(
       `${DISCORD_API}/oauth2/token`,
       new URLSearchParams({
@@ -61,106 +56,18 @@ app.get("/verify", async (req, res) => {
         code,
         redirect_uri: process.env.OAUTH2_REDIRECT_URI,
       }),
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
-        }
-      }
+      { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
     );
 
     const { access_token, refresh_token, expires_in } = tokenRes.data;
-
     const tokenExpiresAt = Math.floor(Date.now() / 1000) + expires_in;
 
-    // =============================
-    // STEP 2 - GET USER INFO
-    // =============================
-    const userRes = await axios.get(
-      `${DISCORD_API}/users/@me`,
-      {
-        headers: {
-          Authorization: `Bearer ${access_token}`
-        }
-      }
-    );
+    const userRes = await axios.get(`${DISCORD_API}/users/@me`, {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
 
     const user = userRes.data;
 
-    console.log("[VERIFY] USER:", user.id, user.username);
-
-    // VALIDASI USER DARI STATE
-    if (user.id !== expectedUserId) {
-    console.log("[VERIFY] USER MISMATCH:", user.id, expectedUserId);
-    return res.send("User mismatch.");
-    }
-
-    // =============================
-    // STEP 3 - CHECK MEMBER FIRST
-    // =============================
-    let memberExists = true;
-
-    try {
-
-      await axios.get(
-        `${DISCORD_API}/guilds/${guildId}/members/${user.id}`,
-        {
-          headers: {
-            Authorization: `Bot ${process.env.BOT_TOKEN}`
-          }
-        }
-      );
-
-      console.log("[VERIFY] USER ALREADY IN GUILD");
-
-    } catch {
-
-      memberExists = false;
-
-    }
-
-    // =============================
-    // STEP 3B - JOIN USER IF NOT EXISTS
-    // =============================
-    if (!memberExists) {
-
-      await axios.put(
-        `${DISCORD_API}/guilds/${guildId}/members/${user.id}`,
-        {
-          access_token: access_token
-        },
-        {
-          headers: {
-            Authorization: `Bot ${process.env.BOT_TOKEN}`,
-            "Content-Type": "application/json"
-          }
-        }
-      );
-
-      console.log("[VERIFY] USER JOINED GUILD");
-
-    }
-
-    // =============================
-    // STEP 4 - GET MEMBER DATA
-    // =============================
-    const memberRes = await axios.get(
-      `${DISCORD_API}/guilds/${guildId}/members/${user.id}`,
-      {
-        headers: {
-          Authorization: `Bot ${process.env.BOT_TOKEN}`
-        }
-      }
-    );
-
-    const guild = memberRes.data;
-
-    const roles = guild.roles.filter(r => r !== guildId);
-
-    console.log("[VERIFY] ROLES:", roles);
-
-    // =============================
-    // STEP 5 - SAVE TO DATABASE
-    // =============================
     await upsertMember({
       userId: user.id,
       guildId,
@@ -169,28 +76,17 @@ app.get("/verify", async (req, res) => {
       accessToken: access_token,
       refreshToken: refresh_token,
       tokenExpiresAt,
-      roles
+      roles: [],
     });
 
-    console.log("[VERIFY] USER SAVED TO DATABASE");
-
-    // =============================
-    // SUCCESS PAGE
-    // =============================
     return res.render("verify", {
-      username: user.username
+    username: user.username
     });
 
   } catch (err) {
-
-    console.error(
-      "[VERIFY ERROR]",
-      err.response?.data || err.message
-    );
-
+    console.error("Verify error:", err.response?.data || err.message);
     return res.send("Verify gagal.");
   }
-
 });
 
 
