@@ -45,7 +45,7 @@ app.get("/verify", async (req, res) => {
   const { code, state } = req.query;
   if (!code || !state) return res.send("Invalid request.");
 
-  const [guildId] = state.split(":");
+  const [guildId, expectedUserId] = state.split(":");
 
   try {
 
@@ -87,6 +87,12 @@ app.get("/verify", async (req, res) => {
     const user = userRes.data;
 
     console.log("[VERIFY] USER:", user.id, user.username);
+
+    // VALIDASI USER DARI STATE
+    if (user.id !== expectedUserId) {
+    console.log("[VERIFY] USER MISMATCH:", user.id, expectedUserId);
+    return res.send("User mismatch.");
+    }
 
     // =============================
     // STEP 3 - CHECK MEMBER FIRST
